@@ -9,6 +9,7 @@ class Cell:
         self.wumpus = False
         self.pit = False
         self.gold = False
+        self.empty = True
         self.utility = 0
         self.return_value = 0
         self.policy = None
@@ -21,6 +22,9 @@ class Cell:
 
     def is_gold(self):
         return self.gold
+
+    def is_empty(self):
+        return self.empty
 
     def get_x(self):
         return self.x
@@ -42,14 +46,17 @@ class Cell:
 
     def set_wumpus(self):
         self.wumpus = True
+        self.empty = False
         self.set_return(-100)
 
     def set_pit(self):
         self.pit = True
+        self.empty = False
         self.set_return(-50)
 
     def set_gold(self):
         self.gold = True
+        self.empty = False
         self.set_return(100)
 
     def set_return(self, return_value):
@@ -103,6 +110,13 @@ class World:
             next_state = self[next_index[0], next_index[1]]
             return next_state.get_utility() - 0.1
 
+    def get_mean_utility(self):
+        mean = 0
+        for y in range(0, self.y_size):
+            for x in range(0, self.x_size):
+                mean += self[x, y].get_utility()
+        return mean/(self.y_size*self.x_size)
+
 
 # Value iteration
 def value_iteration(problem, gama):
@@ -132,7 +146,10 @@ def value_iteration(problem, gama):
     def update_utility(x, y):
         state = problem[x, y]
         # chose best action
-        _, best_utility = chose_best_action(x, y)
+        if state.is_empty():
+            _, best_utility = chose_best_action(x, y)
+        else:
+            best_utility = problem.get_mean_utility()
         # r(s)
         reinforcement = state.get_return()
         return reinforcement + gama * best_utility
