@@ -18,6 +18,15 @@ for gold in [(1, 2), (5, 1)]:
     world[gold].set_gold()
 
 result = value_iteration(world, 0.9)
+
+for y in range(0, 4):
+    y = 3 - y
+    for x in range(0, 8):
+        print(round(result[x, y].get_utility(),2), end=' ')
+    print()
+
+print()
+
 for y in range(0, 4):
     y = 3 - y
     for x in range(0, 8):

@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 
@@ -76,6 +78,7 @@ class World:
         for y in range(0, y_size):
             for x in range(0, x_size):
                 self.states.append(Cell(x, y))
+        self.new_states = copy.deepcopy(self.states)
         self.actions = actions
         self.probability = probability
         self.x_size = x_size
@@ -117,6 +120,24 @@ class World:
                 mean += self[x, y].get_utility()
         return mean/(self.y_size*self.x_size)
 
+    def set_utility(self, x_index, y_index, u):
+        index = y_index * self.x_size + x_index
+        self.new_states[index].set_utility(u)
+
+    def update_states(self):
+        for y in range(0, self.y_size):
+            for x in range(0, self.x_size):
+                index = y * self.x_size + x
+                self.states[index].set_utility(self.new_states[index].get_utility())
+
+    def get_delta(self):
+        delta = 0
+        for y in range(0, self.y_size):
+            for x in range(0, self.x_size):
+                index = y * self.x_size + x
+                delta = abs(self.states[index].get_utility() - self.new_states[index].get_utility())
+        return delta
+
 
 # Value iteration
 def value_iteration(problem, gama):
@@ -155,10 +176,14 @@ def value_iteration(problem, gama):
         return reinforcement + gama * best_utility
 
     # Calculate utilities
-    for i in range(1000):
+    delta = 1
+    while delta > 0.00001:
         for x in range(problem.get_dimensions()[0]):
             for y in range(problem.get_dimensions()[1]):
                 problem[x, y].set_utility(update_utility(x, y))
+                problem.set_utility(x, y, update_utility(x, y))
+        delta = problem.get_delta()
+        problem.update_states()
 
     # Calculate policy
     for x in range(problem.get_dimensions()[0]):
