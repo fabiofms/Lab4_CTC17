@@ -103,13 +103,12 @@ class World:
     def get_next_state_utility(self, direction, state):
         next_index = state.get_index() + direction
         # Board hit
-        if next_index[0] < 0 or next_index[0] >= self.x_size or next_index[1] < 0 or next_index[1] >= self.y_size:
-            return state.get_utility() - 1
+        if self.is_board_action(direction, state):
+            return state.get_utility()
         # Common case
         else:
-            #print('get_next_state_utility: ', next_index)
             next_state = self[next_index[0], next_index[1]]
-            return next_state.get_utility() - 0.1
+            return next_state.get_utility()
 
     def get_mean_utility(self):
         mean = 0
@@ -136,6 +135,24 @@ class World:
                 delta = abs(self.states[index].get_utility() - self.new_states[index].get_utility())
         return delta
 
+    def is_board_action(self, direction, state):
+        next_index = state.get_index() + direction
+        # Board hit
+        if next_index[0] < 0 or next_index[0] >= self.x_size or next_index[1] < 0 or next_index[1] >= self.y_size:
+            return True
+        # Common case
+        else:
+            next_state = self[next_index[0], next_index[1]]
+            return False
+
+    def get_next_state(self, action, state):
+        direction = self.get_action(action)
+        if self.is_board_action(direction, state):
+            return state
+        else:
+            next_index = state.get_index() + direction
+            return self[next_index[0], next_index[1]]
+
 
 # Value iteration
 def value_iteration(problem, gama):
@@ -154,31 +171,38 @@ def value_iteration(problem, gama):
         actions = list(problem.get_actions().keys())
         state = problem[x, y]
         best_action = actions[0]
-        best_utility = get_action_expected_utility(state, best_action)
+        max_expected_utility = get_action_expected_utility(state, best_action)
         for action in actions[1:]:
             u = get_action_expected_utility(state, action)
-            if u > best_utility:
+            if u > max_expected_utility:
                 best_action = action
-                best_utility = u
-        return best_action, best_utility
+                max_expected_utility = u
+        return best_action, max_expected_utility
+
+    def chose_policy(x, y):
+        return chose_best_action(x, y)
 
     def update_utility(x, y):
         state = problem[x, y]
         # chose best action
-        if state.is_empty():
-            _, best_utility = chose_best_action(x, y)
-        else:
-            best_utility = problem.get_mean_utility()
-        # r(s)
         reinforcement = state.get_return()
-        return reinforcement + gama * best_utility
+        if state.is_empty():
+            best_action, max_expected_utility = chose_best_action(x, y)
+            # board hit
+            if problem.is_board_action(problem.get_action(best_action), problem[x,y]):
+                reinforcement -= 1
+            else:
+                reinforcement -= 0.1
+        else:
+            max_expected_utility = problem.get_mean_utility()
+            reinforcement -= 0.1
+        return reinforcement + gama * max_expected_utility
 
     # Calculate utilities
     delta = 1
-    while delta > 0.00001:
+    while delta > 0.0001:
         for x in range(problem.get_dimensions()[0]):
             for y in range(problem.get_dimensions()[1]):
-                problem[x, y].set_utility(update_utility(x, y))
                 problem.set_utility(x, y, update_utility(x, y))
         delta = problem.get_delta()
         problem.update_states()
@@ -186,7 +210,7 @@ def value_iteration(problem, gama):
     # Calculate policy
     for x in range(problem.get_dimensions()[0]):
         for y in range(problem.get_dimensions()[1]):
-            best_action, _ = chose_best_action(x, y)
+            best_action, _ = chose_policy(x, y)
             problem[x, y].set_policy(best_action)
 
     return problem
