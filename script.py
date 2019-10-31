@@ -1,5 +1,5 @@
 import numpy as np
-from Wumpus import *
+from Wumpus_2 import *
 
 actions = {'norte': np.array([0, 1]), 'sul': np.array([0, -1]), 'leste': np.array([1, 0]), 'oeste': np.array([-1, 0])}
 probability = {'frente': [0.7, np.array([[1, 0],[0, 1]])], 'direita': [0.1, np.array([[0, -1],[1, 0]])], 'esquerda': [0.2, np.array([[0, 1],[-1, 0]])]}
