@@ -3,8 +3,8 @@ import copy
 import numpy as np
 
 
-# Cell class. Also that represents a state
 class Cell:
+    # Cell class. Also represents a state.
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -71,8 +71,8 @@ class Cell:
         self.policy = action
 
 
-# World
 class World:
+    # This class represents the world of Wumpus
     def __init__(self, x_size, y_size, actions, probability):
         self.states = []
         for y in range(0, y_size):
@@ -88,6 +88,7 @@ class World:
         x_index, y_index = tup
         return self.states[y_index * self.x_size + x_index]
 
+    # Next methods returns the MDP parts
     def get_actions(self):
         return self.actions
 
@@ -101,6 +102,7 @@ class World:
         return [self.x_size, self.y_size]
 
     def get_next_state_utility(self, direction, state):
+        # Given a state and an action(deterministic), this methods returns the utility of the target state
         next_index = state.get_index() + direction
         # Board hit
         if self.is_board_action(direction, state):
@@ -111,6 +113,8 @@ class World:
             return next_state.get_utility()
 
     def get_mean_utility(self):
+        # Returns the mean utility of all states. It is used to calculate te expected utility of states not empty
+        # because next action is a random movement uniformly distributed along all possible states
         mean = 0
         for y in range(0, self.y_size):
             for x in range(0, self.x_size):
@@ -118,16 +122,20 @@ class World:
         return mean/(self.y_size*self.x_size)
 
     def set_utility(self, x_index, y_index, u):
+        # Changes the utility of a state to a calculated value given as parameter
         index = y_index * self.x_size + x_index
         self.new_states[index].set_utility(u)
 
     def update_states(self):
+        # Used to update all states utility after an iteration cycle
         for y in range(0, self.y_size):
             for x in range(0, self.x_size):
                 index = y * self.x_size + x
                 self.states[index].set_utility(self.new_states[index].get_utility())
 
     def get_delta(self):
+        # Used to calculate the biggest difference between actual and next states, in order to check the convergence
+        # of the value iteration algorithm
         delta = 0
         for y in range(0, self.y_size):
             for x in range(0, self.x_size):
@@ -136,6 +144,7 @@ class World:
         return delta
 
     def is_board_action(self, direction, state):
+        # This method is used to verify if a movement causes a board hit
         next_index = state.get_index() + direction
         # Board hit
         if next_index[0] < 0 or next_index[0] >= self.x_size or next_index[1] < 0 or next_index[1] >= self.y_size:
@@ -145,20 +154,14 @@ class World:
             next_state = self[next_index[0], next_index[1]]
             return False
 
-    def get_next_state(self, action, state):
-        direction = self.get_action(action)
-        if self.is_board_action(direction, state):
-            return state
-        else:
-            next_index = state.get_index() + direction
-            return self[next_index[0], next_index[1]]
-
 
 # Value iteration
 def value_iteration(problem, gama):
+    # This function implements the iteration value algorithm
 
     # Auxiliary functions
     def get_action_expected_utility(state, action):
+        # returns the expected utility of a action from a state
         expected_utility = 0
         for key, value in problem.get_probability():
             # Get final direction from desired action and movement possibly performed
@@ -168,6 +171,7 @@ def value_iteration(problem, gama):
         return expected_utility
 
     def chose_best_action(x, y):
+        # This function returns the best action between all possibilities, based upon their expected utility
         actions = list(problem.get_actions().keys())
         state = problem[x, y]
         best_action = actions[0]
@@ -180,12 +184,16 @@ def value_iteration(problem, gama):
         return best_action, max_expected_utility
 
     def chose_policy(x, y):
+        # Returns the policy for a state, after the end of iteration value algorithm, which is the action with
+        # the best expected utility
         return chose_best_action(x, y)
 
     def update_utility(x, y):
+        # This function gets the best action for a state, calculates its reinforcement and returns the updated utility
+        # Is used in value iteration algorithm to get new values of utility for each state along each iteration
         state = problem[x, y]
-        # chose best action
         reinforcement = state.get_return()
+        # chose best action
         if state.is_empty():
             best_action, max_expected_utility = chose_best_action(x, y)
             # board hit
@@ -198,9 +206,9 @@ def value_iteration(problem, gama):
             reinforcement -= 0.1
         return reinforcement + gama * max_expected_utility
 
-    # Calculate utilities
+    # Calculate utilities: value iteration algorithm
     delta = 1
-    while delta > 0.0001:
+    while delta > 0.001:
         for x in range(problem.get_dimensions()[0]):
             for y in range(problem.get_dimensions()[1]):
                 problem.set_utility(x, y, update_utility(x, y))

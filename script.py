@@ -1,13 +1,17 @@
 import numpy as np
 from Wumpus import *
 
+# Acoes sao dicionarios cujas chaves sao os nomes das acoes e valores sao os vetores de deslocamento
 actions = {'norte': np.array([0, 1]), 'sul': np.array([0, -1]), 'leste': np.array([1, 0]), 'oeste': np.array([-1, 0])}
+# Probabilidades sao dicionarios cujas chaves sao as possiveis direcoes, e os valores sao vetores com o valor da
+# probabilidade para a direcao, e com uma matriz de rotacao que permite obter a direcao final ao multiplicar
+# o vetor da acao desejada pela matriz de rotacao da direcao
 probability = {'frente': [0.7, np.array([[1, 0],[0, 1]])], 'direita': [0.1, np.array([[0, -1],[1, 0]])], 'esquerda': [0.2, np.array([[0, 1],[-1, 0]])]}
 
+# Instanciacao do problema
 world = World(8, 4, actions, probability)
 
-# Wumpus, pit and gold
-
+# Posicionamento dos Wumpus, pit e ouro
 for wumpus in [(0, 2), (4, 1)]:
     world[wumpus].set_wumpus()
 
@@ -17,15 +21,18 @@ for pit in [(1, 3), (2, 0), (2, 2), (6, 0), (6, 2), (6, 3)]:
 for gold in [(1, 2), (5, 1)]:
     world[gold].set_gold()
 
+# Obtercao do resultado
 result = value_iteration(world, 0.9)
 
+# Impressao simplificada dos resultados
+print('\nUtilidades dos estados\n')
 for y in range(0, 4):
     y = 3 - y
     for x in range(0, 8):
         print(round(result[x, y].get_utility(),2), end=' ')
     print()
 
-print()
+print('\nPolitica obtida\n')
 
 for y in range(0, 4):
     y = 3 - y
@@ -39,31 +46,3 @@ for y in range(0, 4):
         else:
             print(result[x, y].get_policy(), end=' ')
     print()
-
-print('\nTesting directions and board detection on state 0,0')
-direction = result.get_action('norte').dot(list(result.get_probability())[0][1][1])
-print('Norte no estado 0,0 sem deslizar: ', direction, ' parede: ', result.is_board_action(direction, result[0,0]))
-direction = result.get_action('norte').dot(list(result.get_probability())[1][1][1])
-print('Norte no estado 0,0 deslizando para a direita: ', direction, ' parede: ', result.is_board_action(direction, result[0,0]))
-direction = result.get_action('norte').dot(list(result.get_probability())[2][1][1])
-print('Norte no estado 0,0 deslizando para a esquerda: ', direction, ' parede: ', result.is_board_action(direction, result[0,0]))
-direction = result.get_action('sul').dot(list(result.get_probability())[0][1][1])
-print('Sul no estado 0,0 sem deslizar: ', direction, ' parede: ', result.is_board_action(direction, result[0,0]))
-direction = result.get_action('sul').dot(list(result.get_probability())[1][1][1])
-print('Sul no estado 0,0 deslizando para a direita:: ', direction, ' parede: ', result.is_board_action(direction, result[0,0]))
-direction = result.get_action('sul').dot(list(result.get_probability())[2][1][1])
-print('Sul no estado 0,0 deslizando para a esquerda:: ', direction, ' parede: ', result.is_board_action(direction, result[0,0]))
-
-print('\nTesting directions and board detection on state 7,3')
-direction = result.get_action('norte').dot(list(result.get_probability())[0][1][1])
-print('Norte no estado 7,3 sem deslizar: ', direction, ' parede: ', result.is_board_action(direction, result[7,3]))
-direction = result.get_action('norte').dot(list(result.get_probability())[1][1][1])
-print('Norte no estado 7,3 deslizando para a direita: ', direction, ' parede: ', result.is_board_action(direction, result[7,3]))
-direction = result.get_action('norte').dot(list(result.get_probability())[2][1][1])
-print('Norte no estado 7,3 deslizando para a esquerda: ', direction, ' parede: ', result.is_board_action(direction, result[7,3]))
-direction = result.get_action('sul').dot(list(result.get_probability())[0][1][1])
-print('Sul no estado 7,3 sem deslizar: ', direction, ' parede: ', result.is_board_action(direction, result[7,3]))
-direction = result.get_action('sul').dot(list(result.get_probability())[1][1][1])
-print('Sul no estado 7,3 deslizando para a direita:: ', direction, ' parede: ', result.is_board_action(direction, result[7,3]))
-direction = result.get_action('sul').dot(list(result.get_probability())[2][1][1])
-print('Sul no estado 7,3 deslizando para a esquerda:: ', direction, ' parede: ', result.is_board_action(direction, result[7,3]))
